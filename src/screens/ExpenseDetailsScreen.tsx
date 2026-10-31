@@ -1,5 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { LoadingButton } from '../components/LoadingButton';
 import { useExpensesStore } from '../context/ExpensesContext';
 import { RootStackParamList } from '../navigation/types';
@@ -11,6 +13,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ExpenseDetails'>;
 export function ExpenseDetailsScreen({ route, navigation }: Props) {
   const { getById, remove } = useExpensesStore();
   const expense = getById(route.params.id);
+  const [confirming, setConfirming] = useState(false);
 
   if (!expense) {
     return (
@@ -22,6 +25,7 @@ export function ExpenseDetailsScreen({ route, navigation }: Props) {
   }
 
   const onDelete = () => {
+    setConfirming(false);
     navigation.goBack();
     remove(expense.id);
   };
@@ -39,11 +43,30 @@ export function ExpenseDetailsScreen({ route, navigation }: Props) {
           <Text style={styles.muted}>Date</Text>
           <Text style={styles.value}>{expense.date}</Text>
         </View>
+        {expense.note ? (
+          <View style={styles.line}>
+            <Text style={styles.muted}>Note</Text>
+            <Text style={styles.value}>{expense.note}</Text>
+          </View>
+        ) : null}
       </View>
 
-      <Pressable style={styles.delete} onPress={onDelete}>
+      <LoadingButton
+        label="Edit expense"
+        onPress={() => navigation.navigate('EditExpense', { id: expense.id })}
+      />
+
+      <Pressable style={styles.delete} onPress={() => setConfirming(true)}>
         <Text style={styles.deleteText}>Delete expense</Text>
       </Pressable>
+
+      <ConfirmDialog
+        visible={confirming}
+        title="Delete expense?"
+        message={`"${expense.title}" will be removed.`}
+        onConfirm={onDelete}
+        onCancel={() => setConfirming(false)}
+      />
     </View>
   );
 }
@@ -70,9 +93,9 @@ const styles = StyleSheet.create({
   },
   amount: { fontSize: 36, fontWeight: '700', color: theme.colors.primary },
   title: { fontSize: 20, fontWeight: '600', color: theme.colors.text },
-  line: { flexDirection: 'row', justifyContent: 'space-between' },
+  line: { flexDirection: 'row', justifyContent: 'space-between', gap: theme.spacing.lg },
   muted: { color: theme.colors.muted },
-  value: { color: theme.colors.text, fontWeight: '500' },
+  value: { color: theme.colors.text, fontWeight: '500', flexShrink: 1, textAlign: 'right' },
   delete: {
     borderWidth: 1,
     borderColor: theme.colors.error,

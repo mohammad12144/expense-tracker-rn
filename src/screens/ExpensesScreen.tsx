@@ -2,11 +2,21 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  SectionList,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { EmptyState } from '../components/EmptyState';
 import { ExpenseTile } from '../components/ExpenseTile';
 import { SummaryCard } from '../components/SummaryCard';
+import { useExpensesStore } from '../context/ExpensesContext';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
-import { useExpenses } from '../hooks/useExpenses';
+import { SortMode, useExpenses } from '../hooks/useExpenses';
 import { RootStackParamList, TabParamList } from '../navigation/types';
 import { theme } from '../theme';
 import { CATEGORIES } from '../types/expense';
@@ -17,10 +27,26 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
+const SORTS: { key: SortMode; label: string }[] = [
+  { key: 'newest', label: 'Newest' },
+  { key: 'amount', label: 'Highest' },
+];
+
 export function ExpensesScreen({ navigation }: Props) {
   const [search, setSearch] = useState('');
   const query = useDebouncedValue(search, 300);
-  const { visible, category, setCategory, remove, total, thisMonth } = useExpenses(query);
+  const { sections, count, category, setCategory, sort, setSort, remove, total, thisMonth } =
+    useExpenses(query);
+  const { getById } = useExpensesStore();
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+
+  const filtering = search.trim() !== '' || category !== 'All';
+  const pending = pendingDelete ? getById(pendingDelete) : undefined;
+
+  const clearFilters = () => {
+    setSearch('');
+    setCategory('All');
+  };
 
   return (
     <View style={styles.screen}>
@@ -48,23 +74,73 @@ export function ExpensesScreen({ navigation }: Props) {
         ))}
       </View>
 
-      <FlatList
-        data={visible}
+      <View style={styles.sortRow}>
+        <Text style={styles.muted}>{`${count} expense${count === 1 ? '' : 's'}`}</Text>
+        <View style={styles.chips}>
+          {SORTS.map((s) => (
+            <Pressable
+              key={s.key}
+              onPress={() => setSort(s.key)}
+              style={[styles.chip, sort === s.key && styles.chipOn]}
+            >
+              <Text>{s.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <SectionList
+        sections={sections}
         keyExtractor={(e) => e.id}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <Text style={styles.sectionTotal}>{formatMoney(section.total)}</Text>
+          </View>
+        )}
         renderItem={({ item }) => (
           <ExpenseTile
             expense={item}
             onPress={(id) => navigation.navigate('ExpenseDetails', { id })}
-            onDelete={remove}
+            onDelete={setPendingDelete}
           />
         )}
-        ListEmptyComponent={<Text style={{ color: theme.colors.muted }}>No expenses</Text>}
+        ListEmptyComponent={
+          filtering ? (
+            <EmptyState
+              icon="search-outline"
+              title="No matches"
+              message="Try a different search or category."
+              actionLabel="Clear filters"
+              onAction={clearFilters}
+            />
+          ) : (
+            <EmptyState
+              title="No expenses yet"
+              message="Add your first expense to get started."
+              actionLabel="Add expense"
+              onAction={() => navigation.navigate('AddExpense')}
+            />
+          )
+        }
         contentContainerStyle={{ paddingBottom: 96 }}
       />
 
       <Pressable style={styles.fab} onPress={() => navigation.navigate('AddExpense')}>
         <Text style={styles.fabText}>+ Add expense</Text>
       </Pressable>
+
+      <ConfirmDialog
+        visible={pendingDelete !== null}
+        title="Delete expense?"
+        message={pending ? `"${pending.title}" will be removed.` : ''}
+        onConfirm={() => {
+          if (pendingDelete) remove(pendingDelete);
+          setPendingDelete(null);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </View>
   );
 }
@@ -92,6 +168,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   chipOn: { backgroundColor: theme.colors.primaryLight, borderColor: '#9a82db' },
+  sortRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  muted: { color: theme.colors.muted },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+    backgroundColor: theme.colors.background,
+  },
+  sectionTitle: { fontWeight: '700', color: theme.colors.text },
+  sectionTotal: { color: theme.colors.muted },
   fab: {
     position: 'absolute',
     right: theme.spacing.lg,

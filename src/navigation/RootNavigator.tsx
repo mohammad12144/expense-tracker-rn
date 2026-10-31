@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { AddExpenseScreen } from '../screens/AddExpenseScreen';
+import { EditExpenseScreen } from '../screens/EditExpenseScreen';
 import { ExpenseDetailsScreen } from '../screens/ExpenseDetailsScreen';
 import { AuthNavigator } from './AuthNavigator';
 import { MainTabs } from './MainTabs';
@@ -26,6 +27,11 @@ export function RootNavigator() {
         name="AddExpense"
         component={AddExpenseScreen}
         options={{ title: 'New expense', presentation: 'modal' }}
+      />
+      <Stack.Screen
+        name="EditExpense"
+        component={EditExpenseScreen}
+        options={{ title: 'Edit expense', presentation: 'modal' }}
       />
     </Stack.Navigator>
   );
