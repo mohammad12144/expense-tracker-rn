@@ -1,53 +1,29 @@
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { CompositeScreenProps } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ExpenseTile } from '../components/ExpenseTile';
 import { SummaryCard } from '../components/SummaryCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useExpenses } from '../hooks/useExpenses';
-import { AuthUser } from '../services/mockAuth';
+import { RootStackParamList, TabParamList } from '../navigation/types';
 import { theme } from '../theme';
 import { CATEGORIES } from '../types/expense';
 import { formatMoney } from '../utils/format';
 
-interface Props {
-  user: AuthUser;
-  onLogout: () => void;
-}
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabParamList, 'Expenses'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
-export function ExpensesScreen({ user, onLogout }: Props) {
+export function ExpensesScreen({ navigation }: Props) {
   const [search, setSearch] = useState('');
   const query = useDebouncedValue(search, 300);
-  const { visible, category, setCategory, add, remove, total, thisMonth } =
-    useExpenses(query);
-
-  const [title, setTitle] = useState('');
-  const [amount, setAmount] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const submit = () => {
-    const value = Number(amount);
-    if (!title.trim()) return setError('Title is required');
-    if (!Number.isFinite(value) || value <= 0) return setError('Amount must be positive');
-    add({
-      title: title.trim(),
-      amount: value,
-      category: category === 'All' ? 'Other' : category,
-      date: new Date().toISOString().slice(0, 10),
-    });
-    setTitle('');
-    setAmount('');
-    setError(null);
-  };
+  const { visible, category, setCategory, remove, total, thisMonth } = useExpenses(query);
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <Text style={styles.h1}>Hi, {user.name}</Text>
-        <Pressable onPress={onLogout}>
-          <Text style={styles.logout}>Log out</Text>
-        </Pressable>
-      </View>
-
       <View style={styles.row}>
         <SummaryCard label="Total" value={formatMoney(total)} />
         <SummaryCard label="This month" value={formatMoney(thisMonth)} />
@@ -72,32 +48,23 @@ export function ExpensesScreen({ user, onLogout }: Props) {
         ))}
       </View>
 
-      <View style={styles.row}>
-        <TextInput
-          style={[styles.input, { flex: 2 }]}
-          placeholder="Title"
-          value={title}
-          onChangeText={setTitle}
-        />
-        <TextInput
-          style={[styles.input, { flex: 1 }]}
-          placeholder="Amount"
-          keyboardType="numeric"
-          value={amount}
-          onChangeText={setAmount}
-        />
-        <Pressable style={styles.add} onPress={submit}>
-          <Text style={{ color: '#fff' }}>Add</Text>
-        </Pressable>
-      </View>
-      {error && <Text style={styles.error}>{error}</Text>}
-
       <FlatList
         data={visible}
         keyExtractor={(e) => e.id}
-        renderItem={({ item }) => <ExpenseTile expense={item} onDelete={remove} />}
+        renderItem={({ item }) => (
+          <ExpenseTile
+            expense={item}
+            onPress={(id) => navigation.navigate('ExpenseDetails', { id })}
+            onDelete={remove}
+          />
+        )}
         ListEmptyComponent={<Text style={{ color: theme.colors.muted }}>No expenses</Text>}
+        contentContainerStyle={{ paddingBottom: 96 }}
       />
+
+      <Pressable style={styles.fab} onPress={() => navigation.navigate('AddExpense')}>
+        <Text style={styles.fabText}>+ Add expense</Text>
+      </Pressable>
     </View>
   );
 }
@@ -105,14 +72,10 @@ export function ExpensesScreen({ user, onLogout }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    paddingTop: 56,
-    paddingHorizontal: theme.spacing.lg,
+    padding: theme.spacing.lg,
     backgroundColor: theme.colors.background,
     gap: theme.spacing.md,
   },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  h1: { fontSize: 24, fontWeight: '700', color: theme.colors.text },
-  logout: { color: theme.colors.primary, fontWeight: '600' },
   row: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   input: {
     borderWidth: 1,
@@ -129,11 +92,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   chipOn: { backgroundColor: theme.colors.primaryLight, borderColor: '#9a82db' },
-  add: {
+  fab: {
+    position: 'absolute',
+    right: theme.spacing.lg,
+    bottom: theme.spacing.lg,
     backgroundColor: theme.colors.primary,
-    borderRadius: theme.radius.md,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    borderRadius: 28,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
   },
-  error: { color: theme.colors.error },
+  fabText: { color: '#fff', fontWeight: '600' },
 });

@@ -5,12 +5,13 @@ import { formatMoney } from '../utils/format';
 
 interface Props {
   expense: Expense;
+  onPress: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-function ExpenseTileBase({ expense, onDelete }: Props) {
+function ExpenseTileBase({ expense, onPress, onDelete }: Props) {
   return (
-    <View style={styles.tile}>
+    <Pressable onPress={() => onPress(expense.id)} style={styles.tile}>
       <View style={{ flex: 1 }}>
         <Text style={styles.title}>{expense.title}</Text>
         <Text style={styles.sub}>
@@ -21,7 +22,7 @@ function ExpenseTileBase({ expense, onDelete }: Props) {
       <Pressable onPress={() => onDelete(expense.id)} style={styles.del}>
         <Text style={{ color: '#b3261e' }}>Delete</Text>
       </Pressable>
-    </View>
+    </Pressable>
   );
 }
 

@@ -1,33 +1,21 @@
+import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { View } from 'react-native';
-import { ExpensesScreen } from './src/screens/ExpensesScreen';
-import { LoginScreen } from './src/screens/LoginScreen';
-import { RegisterScreen } from './src/screens/RegisterScreen';
-import { AuthUser } from './src/services/mockAuth';
-import { theme } from './src/theme';
-
-type AuthScreen = 'login' | 'register';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AuthProvider } from './src/context/AuthContext';
+import { ExpensesProvider } from './src/context/ExpensesContext';
+import { RootNavigator } from './src/navigation/RootNavigator';
 
 export default function App() {
-  const [screen, setScreen] = useState<AuthScreen>('login');
-  const [user, setUser] = useState<AuthUser | null>(null);
-
-  const logout = () => {
-    setUser(null);
-    setScreen('login');
-  };
-
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <StatusBar style="dark" />
-      {user ? (
-        <ExpensesScreen user={user} onLogout={logout} />
-      ) : screen === 'login' ? (
-        <LoginScreen onLoggedIn={setUser} onGoRegister={() => setScreen('register')} />
-      ) : (
-        <RegisterScreen onRegistered={setUser} onGoLogin={() => setScreen('login')} />
-      )}
-    </View>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <ExpensesProvider>
+          <NavigationContainer>
+            <StatusBar style="dark" />
+            <RootNavigator />
+          </NavigationContainer>
+        </ExpensesProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
