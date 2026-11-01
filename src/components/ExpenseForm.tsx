@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useForm } from '../hooks/useForm';
 import { theme } from '../theme';
 import { CATEGORIES, Category, Expense } from '../types/expense';
 import { validateAmount, validateDate } from '../utils/expenseValidators';
 import { validateRequired } from '../utils/validators';
+import { Chip } from './Chip';
 import { CustomTextField } from './CustomTextField';
 import { LoadingButton } from './LoadingButton';
 
@@ -86,13 +87,7 @@ export function ExpenseForm({ initial, submitLabel, onSubmit, onCancel }: Props)
         <Text style={styles.label}>Category</Text>
         <View style={styles.chips}>
           {CATEGORIES.map((c) => (
-            <Pressable
-              key={c}
-              onPress={() => setCategory(c)}
-              style={[styles.chip, category === c && styles.chipOn]}
-            >
-              <Text>{c}</Text>
-            </Pressable>
+            <Chip key={c} label={c} selected={category === c} onPress={() => setCategory(c)} />
           ))}
         </View>
       </View>
@@ -107,12 +102,4 @@ const styles = StyleSheet.create({
   form: { gap: theme.spacing.lg },
   label: { fontSize: 13, color: theme.colors.muted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#cccccc',
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  chipOn: { backgroundColor: theme.colors.primaryLight, borderColor: '#9a82db' },
 });

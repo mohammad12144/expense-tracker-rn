@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { ExpenseForm } from '../components/ExpenseForm';
-import { LoadingButton } from '../components/LoadingButton';
+import { NotFoundState } from '../components/NotFoundState';
 import { useExpensesStore } from '../context/ExpensesContext';
 import { RootStackParamList } from '../navigation/types';
 import { theme } from '../theme';
@@ -14,10 +14,10 @@ export function EditExpenseScreen({ route, navigation }: Props) {
 
   if (!expense) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.muted}>This expense no longer exists.</Text>
-        <LoadingButton label="Go back" onPress={() => navigation.goBack()} />
-      </View>
+      <NotFoundState
+        message="This expense no longer exists."
+        onBack={() => navigation.goBack()}
+      />
     );
   }
 
@@ -42,12 +42,4 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     flexGrow: 1,
   },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.lg,
-    backgroundColor: theme.colors.background,
-  },
-  muted: { color: theme.colors.muted },
 });

@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Chip } from '../components/Chip';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { ExpenseTile } from '../components/ExpenseTile';
@@ -64,13 +65,7 @@ export function ExpensesScreen({ navigation }: Props) {
 
       <View style={styles.chips}>
         {(['All', ...CATEGORIES] as const).map((c) => (
-          <Pressable
-            key={c}
-            onPress={() => setCategory(c)}
-            style={[styles.chip, category === c && styles.chipOn]}
-          >
-            <Text>{c}</Text>
-          </Pressable>
+          <Chip key={c} label={c} selected={category === c} onPress={() => setCategory(c)} />
         ))}
       </View>
 
@@ -78,13 +73,12 @@ export function ExpensesScreen({ navigation }: Props) {
         <Text style={styles.muted}>{`${count} expense${count === 1 ? '' : 's'}`}</Text>
         <View style={styles.chips}>
           {SORTS.map((s) => (
-            <Pressable
+            <Chip
               key={s.key}
+              label={s.label}
+              selected={sort === s.key}
               onPress={() => setSort(s.key)}
-              style={[styles.chip, sort === s.key && styles.chipOn]}
-            >
-              <Text>{s.label}</Text>
-            </Pressable>
+            />
           ))}
         </View>
       </View>
@@ -160,14 +154,6 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#cccccc',
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  chipOn: { backgroundColor: theme.colors.primaryLight, borderColor: '#9a82db' },
   sortRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   muted: { color: theme.colors.muted },
   sectionHeader: {

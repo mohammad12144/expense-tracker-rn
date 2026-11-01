@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { LoadingButton } from '../components/LoadingButton';
+import { NotFoundState } from '../components/NotFoundState';
 import { useExpensesStore } from '../context/ExpensesContext';
 import { RootStackParamList } from '../navigation/types';
 import { theme } from '../theme';
@@ -17,10 +18,10 @@ export function ExpenseDetailsScreen({ route, navigation }: Props) {
 
   if (!expense) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.muted}>This expense no longer exists.</Text>
-        <LoadingButton label="Go back" onPress={() => navigation.goBack()} />
-      </View>
+      <NotFoundState
+        message="This expense no longer exists."
+        onBack={() => navigation.goBack()}
+      />
     );
   }
 
@@ -77,13 +78,6 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     backgroundColor: theme.colors.background,
     gap: theme.spacing.lg,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.lg,
-    backgroundColor: theme.colors.background,
   },
   card: {
     backgroundColor: theme.colors.surface,
