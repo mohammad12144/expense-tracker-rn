@@ -3,10 +3,17 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../context/AuthContext';
 import { ExpensesScreen } from '../screens/ExpensesScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { RatesScreen } from '../screens/RatesScreen';
 import { theme } from '../theme';
 import { TabParamList } from './types';
 
 const Tab = createBottomTabNavigator<TabParamList>();
+
+const ICONS = {
+  Expenses: 'wallet-outline',
+  Rates: 'swap-horizontal-outline',
+  Profile: 'person-outline',
+} as const;
 
 export function MainTabs() {
   const { user } = useAuth();
@@ -17,7 +24,7 @@ export function MainTabs() {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarIcon: ({ color, size }) => (
           <Ionicons
-            name={route.name === 'Expenses' ? 'wallet-outline' : 'person-outline'}
+            name={ICONS[route.name]}
             size={size}
             color={color}
           />
@@ -29,6 +36,7 @@ export function MainTabs() {
         component={ExpensesScreen}
         options={{ title: user ? `Hi, ${user.name}` : 'Expenses', tabBarLabel: 'Expenses' }}
       />
+      <Tab.Screen name="Rates" component={RatesScreen} options={{ title: 'Exchange rates' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
