@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 import { AppLogo } from '../components/AppLogo';
 import { AuthLayout } from '../components/AuthLayout';
 import { CustomTextField } from '../components/CustomTextField';
 import { LoadingButton } from '../components/LoadingButton';
 import { useForm } from '../hooks/useForm';
-import { AuthUser, login } from '../services/mockAuth';
+import { AuthSession, login } from '../services/mockAuth';
 import { theme } from '../theme';
 import { validateEmail, validateRequired } from '../utils/validators';
 
 interface Props {
-  onLoggedIn: (user: AuthUser) => void;
+  onLoggedIn: (session: AuthSession, remember: boolean) => void;
   onGoRegister: () => void;
 }
 
@@ -20,13 +20,14 @@ export function LoginScreen({ onLoggedIn, onGoRegister }: Props) {
     { email: validateEmail, password: validateRequired('Password') },
   );
   const [loading, setLoading] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [serverError, setServerError] = useState<string | null>(null);
 
   const submit = form.handleSubmit(async (v) => {
     setLoading(true);
     setServerError(null);
     try {
-      onLoggedIn(await login(v.email.trim(), v.password));
+      onLoggedIn(await login(v.email.trim(), v.password), remember);
     } catch (e) {
       setServerError(e instanceof Error ? e.message : 'Something went wrong');
     } finally {
@@ -60,6 +61,15 @@ export function LoginScreen({ onLoggedIn, onGoRegister }: Props) {
         placeholder="Your password"
       />
 
+      <View style={styles.rememberRow}>
+        <Text style={styles.rememberLabel}>Remember me</Text>
+        <Switch
+          value={remember}
+          onValueChange={setRemember}
+          trackColor={{ true: theme.colors.primary }}
+        />
+      </View>
+
       {serverError && <Text style={styles.serverError}>{serverError}</Text>}
 
       <LoadingButton label="Log in" onPress={submit} loading={loading} />
@@ -75,5 +85,7 @@ export function LoginScreen({ onLoggedIn, onGoRegister }: Props) {
 const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '700', color: theme.colors.text, textAlign: 'center' },
   serverError: { color: theme.colors.error, textAlign: 'center' },
+  rememberRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  rememberLabel: { color: theme.colors.text },
   hint: { color: theme.colors.muted, fontSize: 12, textAlign: 'center' },
 });

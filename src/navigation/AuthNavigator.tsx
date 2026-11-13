@@ -22,7 +22,7 @@ export function AuthNavigator() {
       <Stack.Screen name="Register">
         {({ navigation }) => (
           <RegisterScreen
-            onRegistered={signIn}
+            onRegistered={(session) => signIn(session, true)}
             onGoLogin={() => navigation.navigate('Login')}
           />
         )}

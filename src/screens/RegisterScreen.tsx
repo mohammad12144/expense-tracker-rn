@@ -5,7 +5,7 @@ import { AuthLayout } from '../components/AuthLayout';
 import { CustomTextField } from '../components/CustomTextField';
 import { LoadingButton } from '../components/LoadingButton';
 import { useForm } from '../hooks/useForm';
-import { AuthUser, register } from '../services/mockAuth';
+import { AuthSession, register } from '../services/mockAuth';
 import { theme } from '../theme';
 import {
   validateConfirm,
@@ -15,7 +15,7 @@ import {
 } from '../utils/validators';
 
 interface Props {
-  onRegistered: (user: AuthUser) => void;
+  onRegistered: (session: AuthSession) => void;
   onGoLogin: () => void;
 }
 
