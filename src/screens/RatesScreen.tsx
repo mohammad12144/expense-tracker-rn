@@ -1,34 +1,33 @@
-import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { Chip } from '../components/Chip';
 import { ErrorState } from '../components/ErrorState';
 import { SummaryCard } from '../components/SummaryCard';
-import { useExpensesStore } from '../context/ExpensesContext';
-import { useAsync } from '../hooks/useAsync';
-import { getRates, RatesClient } from '../services/api/rates';
+import { useRatesQuery } from '../hooks/useRatesQuery';
+import { RatesClient } from '../services/api/rates';
+import { selectTotal, useExpenseStore } from '../store/expensesStore';
+import { CURRENCIES, usePreferences } from '../store/preferencesStore';
 import { theme } from '../theme';
 import { convert, formatRate } from '../utils/currency';
 import { formatMoney } from '../utils/format';
 
-const TARGETS = ['EUR', 'GBP', 'JOD', 'ILS', 'SAR', 'AED', 'TRY', 'EGP'];
 const CLIENTS: { key: RatesClient; label: string }[] = [
   { key: 'axios', label: 'Axios' },
   { key: 'fetch', label: 'fetch' },
 ];
 
 export function RatesScreen() {
-  const { expenses } = useExpensesStore();
-  const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const total = useExpenseStore(selectTotal);
+  const client = usePreferences((s) => s.client);
+  const setClient = usePreferences((s) => s.setClient);
+  const targets = usePreferences((s) => s.targets);
+  const toggleTarget = usePreferences((s) => s.toggleTarget);
 
-  const [client, setClient] = useState<RatesClient>('axios');
-  const task = useCallback((signal: AbortSignal) => getRates(client, 'USD', { signal }), [client]);
-  const { data, error, loading, reload } = useAsync(task);
+  const { data, error, isPending, isFetching, isRefetching, refetch } = useRatesQuery(client);
 
   const rows = data
-    ? TARGETS.filter((code) => data.rates[code] !== undefined).map((code) => ({
-        code,
-        rate: data.rates[code],
-      }))
+    ? targets
+        .filter((code) => data.rates[code] !== undefined)
+        .map((code) => ({ code, rate: data.rates[code] }))
     : [];
 
   return (
@@ -51,7 +50,18 @@ export function RatesScreen() {
         </View>
       </View>
 
-      {loading && !data ? (
+      <View style={styles.chips}>
+        {CURRENCIES.map((code) => (
+          <Chip
+            key={code}
+            label={code}
+            selected={targets.includes(code)}
+            onPress={() => toggleTarget(code)}
+          />
+        ))}
+      </View>
+
+      {isPending ? (
         <View style={styles.center} accessibilityRole="progressbar">
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.muted}>Loading rates...</Text>
@@ -60,26 +70,26 @@ export function RatesScreen() {
 
       {error && !data ? (
         <View style={styles.center}>
-          <ErrorState message={error.userMessage} onRetry={reload} />
+          <ErrorState message={error.userMessage} onRetry={() => void refetch()} />
         </View>
       ) : null}
 
       {data ? (
         <>
           {error ? (
-            <Text style={styles.banner} onPress={reload}>
+            <Text style={styles.banner} onPress={() => void refetch()}>
               {`${error.userMessage} Showing the last loaded rates. Tap to retry.`}
             </Text>
           ) : null}
           <View style={styles.sortRow}>
             <Text style={styles.muted}>{data.updated || 'Latest rates'}</Text>
-            {loading ? <ActivityIndicator color={theme.colors.primary} /> : null}
+            {isFetching ? <ActivityIndicator color={theme.colors.primary} /> : null}
           </View>
           <FlatList
             data={rows}
             keyExtractor={(r) => r.code}
-            refreshing={loading}
-            onRefresh={reload}
+            refreshing={isRefetching}
+            onRefresh={() => void refetch()}
             renderItem={({ item }) => (
               <View style={styles.rate}>
                 <View>
@@ -106,7 +116,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   row: { flexDirection: 'row', gap: 10 },
-  chips: { flexDirection: 'row', gap: theme.spacing.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
   sortRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: theme.spacing.md },
   muted: { color: theme.colors.muted },

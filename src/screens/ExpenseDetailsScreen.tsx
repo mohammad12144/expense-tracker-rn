@@ -4,16 +4,17 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { LoadingButton } from '../components/LoadingButton';
 import { NotFoundState } from '../components/NotFoundState';
-import { useExpensesStore } from '../context/ExpensesContext';
 import { RootStackParamList } from '../navigation/types';
+import { selectExpenseById, useExpenseStore } from '../store/expensesStore';
 import { theme } from '../theme';
 import { formatMoney } from '../utils/format';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ExpenseDetails'>;
 
 export function ExpenseDetailsScreen({ route, navigation }: Props) {
-  const { getById, remove } = useExpensesStore();
-  const expense = getById(route.params.id);
+  // Selector: this screen re-renders only when THIS expense changes.
+  const expense = useExpenseStore(selectExpenseById(route.params.id));
+  const remove = useExpenseStore((s) => s.remove);
   const [confirming, setConfirming] = useState(false);
 
   if (!expense) {

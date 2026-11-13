@@ -2,15 +2,15 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScrollView, StyleSheet } from 'react-native';
 import { ExpenseForm } from '../components/ExpenseForm';
 import { NotFoundState } from '../components/NotFoundState';
-import { useExpensesStore } from '../context/ExpensesContext';
 import { RootStackParamList } from '../navigation/types';
+import { selectExpenseById, useExpenseStore } from '../store/expensesStore';
 import { theme } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditExpense'>;
 
 export function EditExpenseScreen({ route, navigation }: Props) {
-  const { getById, update } = useExpensesStore();
-  const expense = getById(route.params.id);
+  const expense = useExpenseStore(selectExpenseById(route.params.id));
+  const update = useExpenseStore((s) => s.update);
 
   if (!expense) {
     return (
