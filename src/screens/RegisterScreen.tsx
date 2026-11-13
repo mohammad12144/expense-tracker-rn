@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { StyleSheet, Text } from 'react-native';
 import { AppLogo } from '../components/AppLogo';
 import { AuthLayout } from '../components/AuthLayout';
 import { CustomTextField } from '../components/CustomTextField';
 import { LoadingButton } from '../components/LoadingButton';
+import { useAuth } from '../context/AuthContext';
 import { useForm } from '../hooks/useForm';
-import { AuthSession, register } from '../services/mockAuth';
 import { theme } from '../theme';
 import {
   validateConfirm,
@@ -15,18 +15,20 @@ import {
 } from '../utils/validators';
 
 interface Props {
-  onRegistered: (session: AuthSession) => void;
   onGoLogin: () => void;
 }
 
-export function RegisterScreen({ onRegistered, onGoLogin }: Props) {
+export function RegisterScreen({ onGoLogin }: Props) {
+  const { signUp, configured } = useAuth();
+  // The "confirm" validator needs the current password value.
+  const password = useRef('');
   const form = useForm(
     { name: '', email: '', password: '', confirm: '' },
     {
       name: validateName,
       email: validateEmail,
       password: validatePassword,
-      confirm: (value, values) => validateConfirm(() => values.password)(value),
+      confirm: validateConfirm(() => password.current),
     },
   );
   const [loading, setLoading] = useState(false);
@@ -36,7 +38,7 @@ export function RegisterScreen({ onRegistered, onGoLogin }: Props) {
     setLoading(true);
     setServerError(null);
     try {
-      onRegistered(await register(v.name.trim(), v.email.trim(), v.password));
+      await signUp(v.name.trim(), v.email.trim(), v.password);
     } catch (e) {
       setServerError(e instanceof Error ? e.message : 'Something went wrong');
     } finally {
@@ -46,7 +48,7 @@ export function RegisterScreen({ onRegistered, onGoLogin }: Props) {
 
   return (
     <AuthLayout>
-      <AppLogo size={56} />
+      <AppLogo />
       <Text style={styles.title}>Create your account</Text>
 
       <CustomTextField
@@ -74,10 +76,13 @@ export function RegisterScreen({ onRegistered, onGoLogin }: Props) {
         icon="lock-closed-outline"
         secure
         value={form.values.password}
-        onChangeText={(t) => form.setValue('password', t)}
+        onChangeText={(t) => {
+          password.current = t;
+          form.setValue('password', t);
+        }}
         onBlur={() => form.setFieldTouched('password')}
         error={form.errorOf('password')}
-        placeholder="At least 8 characters"
+        placeholder="Letters and numbers, 8+ characters"
       />
       <CustomTextField
         label="Confirm password"
@@ -92,12 +97,8 @@ export function RegisterScreen({ onRegistered, onGoLogin }: Props) {
 
       {serverError && <Text style={styles.serverError}>{serverError}</Text>}
 
-      <LoadingButton label="Register" onPress={submit} loading={loading} />
+      <LoadingButton label="Sign up" onPress={submit} loading={loading} disabled={!configured} />
       <LoadingButton label="I already have an account" variant="secondary" onPress={onGoLogin} />
-
-      <View>
-        <Text style={styles.hint}>Demo: the email "taken@example.com" simulates a register error.</Text>
-      </View>
     </AuthLayout>
   );
 }
@@ -105,5 +106,4 @@ export function RegisterScreen({ onRegistered, onGoLogin }: Props) {
 const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '700', color: theme.colors.text, textAlign: 'center' },
   serverError: { color: theme.colors.error, textAlign: 'center' },
-  hint: { color: theme.colors.muted, fontSize: 12, textAlign: 'center' },
 });

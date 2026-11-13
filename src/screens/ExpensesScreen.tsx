@@ -1,6 +1,7 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { SyncBanner } from '../components/SyncBanner';
 import { useState } from 'react';
 import {
   Pressable,
@@ -51,7 +52,9 @@ export function ExpensesScreen({ navigation }: Props) {
 
   return (
     <View style={styles.screen}>
+            <SyncBanner />
       <View style={styles.row}>
+
         <SummaryCard label="Total" value={formatMoney(total)} />
         <SummaryCard label="This month" value={formatMoney(thisMonth)} />
       </View>
