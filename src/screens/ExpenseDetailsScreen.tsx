@@ -1,9 +1,10 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { LoadingButton } from '../components/LoadingButton';
 import { NotFoundState } from '../components/NotFoundState';
+import { ReceiptSection } from '../components/ReceiptSection';
 import { RootStackParamList } from '../navigation/types';
 import { selectExpenseById, useExpenseStore } from '../store/expensesStore';
 import { theme } from '../theme';
@@ -33,7 +34,7 @@ export function ExpenseDetailsScreen({ route, navigation }: Props) {
   };
 
   return (
-    <View style={styles.screen}>
+    <ScrollView contentContainerStyle={styles.screen}>
       <View style={styles.card}>
         <Text style={styles.amount}>{formatMoney(expense.amount)}</Text>
         <Text style={styles.title}>{expense.title}</Text>
@@ -53,6 +54,8 @@ export function ExpenseDetailsScreen({ route, navigation }: Props) {
         ) : null}
       </View>
 
+      <ReceiptSection expenseId={expense.id} />
+
       <LoadingButton
         label="Edit expense"
         onPress={() => navigation.navigate('EditExpense', { id: expense.id })}
@@ -69,13 +72,13 @@ export function ExpenseDetailsScreen({ route, navigation }: Props) {
         onConfirm={onDelete}
         onCancel={() => setConfirming(false)}
       />
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
+    flexGrow: 1,
     padding: theme.spacing.lg,
     backgroundColor: theme.colors.background,
     gap: theme.spacing.lg,

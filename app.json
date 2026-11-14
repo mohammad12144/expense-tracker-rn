@@ -22,7 +22,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow Expense Tracker to use the camera to photograph your receipts.",
+          "photosPermission": "Allow Expense Tracker to access your photos to attach receipts."
+        }
+      ]
     ]
   }
 }
